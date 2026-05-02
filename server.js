@@ -48,13 +48,15 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema);
 
 // ==========================================
-// 3. EMAIL OTP SETUP (Secure via .env)
+// 3. EMAIL OTP SETUP (Brevo SMTP Setup)
 // ==========================================
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: process.env.SMTP_HOST, // smtp-relay.brevo.com
+    port: process.env.SMTP_PORT, // 587
+    secure: false, // true for 465, false for other ports like 587
     auth: {
-        user: process.env.EMAIL_USER, // e.g., your-email@gmail.com
-        pass: process.env.EMAIL_PASS  // e.g., your-app-password
+        user: process.env.SMTP_USER, // Brevo Login Email
+        pass: process.env.SMTP_PASS  // Brevo SMTP Key
     }
 });
 
@@ -86,8 +88,9 @@ app.post('/api/signup', async (req, res) => {
 
         await newUser.save();
 
+        // Send OTP using Brevo SMTP
         await transporter.sendMail({
-            from: process.env.EMAIL_USER,
+            from: process.env.SMTP_USER, 
             to: email,
             subject: 'JobGram - Verify Your Account',
             text: `Welcome to JobGram, ${name}! Your OTP for verification is: ${otp}`
@@ -135,8 +138,9 @@ app.post('/api/forgot-password', async (req, res) => {
         user.otp = otp; 
         await user.save();
 
+        // Send Forgot Password OTP using Brevo SMTP
         await transporter.sendMail({
-            from: process.env.EMAIL_USER,
+            from: process.env.SMTP_USER,
             to: email,
             subject: 'JobGram - Password Reset OTP',
             text: `Hello ${user.name},\n\nYour OTP to reset your password is: ${otp}\n\nAgar aapne ye request nahi ki hai, toh is email ko ignore karein.`
