@@ -21,7 +21,7 @@ if (!MONGO_URI) {
 } else {
     mongoose.connect(MONGO_URI)
       .then(() => console.log('✅ MongoDB Connected Successfully!'))
-      .catch(err => console.log('❌ MongoDB Connection Error: ', err));
+      .catch(err => console.error('❌ MongoDB Connection Error: ', err));
 }
 
 // ==========================================
@@ -99,7 +99,8 @@ app.post('/api/signup', async (req, res) => {
         res.json({ success: true, message: "Signup successful! Check email for OTP." });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server error", error });
+        console.error("❌ SIGNUP ERROR:", error); // Error log for Render
+        res.status(500).json({ success: false, message: "Server error during signup. Please check Render logs.", error: error.message });
     }
 });
 
@@ -119,6 +120,7 @@ app.post('/api/verify-otp', async (req, res) => {
             res.status(400).json({ success: false, message: "Invalid OTP." });
         }
     } catch (error) {
+        console.error("❌ VERIFY OTP ERROR:", error); // Error log for Render
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
@@ -148,7 +150,8 @@ app.post('/api/forgot-password', async (req, res) => {
 
         res.json({ success: true, message: "OTP sent to your email for password reset." });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server error while sending OTP." });
+        console.error("❌ FORGOT PASSWORD ERROR:", error); // Error log for Render
+        res.status(500).json({ success: false, message: "Server error while sending OTP. Please check Render logs.", error: error.message });
     }
 });
 
@@ -170,6 +173,7 @@ app.post('/api/reset-password', async (req, res) => {
             res.status(400).json({ success: false, message: "Invalid OTP. Kripya sahi OTP daalein." });
         }
     } catch (error) {
+        console.error("❌ RESET PASSWORD ERROR:", error); // Error log for Render
         res.status(500).json({ success: false, message: "Server error while resetting password." });
     }
 });
@@ -193,6 +197,7 @@ app.post('/api/login', async (req, res) => {
 
         res.json({ success: true, token, role: user.role, username: user.username });
     } catch (error) {
+        console.error("❌ LOGIN ERROR:", error); // Error log for Render
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
@@ -212,6 +217,7 @@ app.post('/api/admin/assign-company', async (req, res) => {
 
         res.json({ success: true, message: `${worker.name} is successfully assigned to ${companyName}` });
     } catch (error) {
+        console.error("❌ ADMIN ASSIGN COMPANY ERROR:", error); // Error log for Render
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
