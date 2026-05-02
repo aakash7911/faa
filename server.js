@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -21,7 +22,10 @@ if (!MONGO_URI) {
 } else {
     mongoose.connect(MONGO_URI)
       .then(() => console.log('✅ MongoDB Connected Successfully!'))
-      .catch(err => console.error('❌ MongoDB Connection Error: ', err));
+      .catch(err => {
+          console.error('❌ MONGODB CRITICAL ERROR: ', err.message);
+          console.error('👉 MONGODB FULL ERROR: ', err);
+      });
 }
 
 // ==========================================
@@ -48,16 +52,18 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema);
 
 // ==========================================
-// 3. EMAIL OTP SETUP (Brevo SMTP Setup)
+// 3. EMAIL OTP SETUP (Brevo SMTP Setup with DEEP LOGGING)
 // ==========================================
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST, // smtp-relay.brevo.com
-    port: process.env.SMTP_PORT, // 587
-    secure: false, // true for 465, false for other ports like 587
+    port: process.env.SMTP_PORT, // 587 or 2525
+    secure: false, // true for 465, false for other ports
     auth: {
         user: process.env.SMTP_USER, // Brevo Login Email
         pass: process.env.SMTP_PASS  // Brevo SMTP Key
-    }
+    },
+    debug: true,  // <--- Shows exactly what SMTP is doing
+    logger: true  // <--- Prints SMTP traffic to Render console
 });
 
 // ==========================================
@@ -99,8 +105,14 @@ app.post('/api/signup', async (req, res) => {
         res.json({ success: true, message: "Signup successful! Check email for OTP." });
 
     } catch (error) {
-        console.error("❌ SIGNUP ERROR:", error); // Error log for Render
-        res.status(500).json({ success: false, message: "Server error during signup. Please check Render logs.", error: error.message });
+        console.error("❌ SIGNUP API CRASHED!");
+        console.error("👉 Reason:", error.message);
+        console.error("👉 Full Stack:", error.stack);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error during signup.", 
+            systemErrorDetail: error.message 
+        });
     }
 });
 
@@ -120,8 +132,13 @@ app.post('/api/verify-otp', async (req, res) => {
             res.status(400).json({ success: false, message: "Invalid OTP." });
         }
     } catch (error) {
-        console.error("❌ VERIFY OTP ERROR:", error); // Error log for Render
-        res.status(500).json({ success: false, message: "Server error" });
+        console.error("❌ VERIFY OTP API CRASHED!");
+        console.error("👉 Reason:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error while verifying OTP.",
+            systemErrorDetail: error.message
+        });
     }
 });
 
@@ -150,8 +167,14 @@ app.post('/api/forgot-password', async (req, res) => {
 
         res.json({ success: true, message: "OTP sent to your email for password reset." });
     } catch (error) {
-        console.error("❌ FORGOT PASSWORD ERROR:", error); // Error log for Render
-        res.status(500).json({ success: false, message: "Server error while sending OTP. Please check Render logs.", error: error.message });
+        console.error("❌ FORGOT PASSWORD API CRASHED!");
+        console.error("👉 Reason:", error.message);
+        console.error("👉 Full Stack:", error.stack);
+        res.status(500).json({ 
+            success: false, 
+            message: "Email bhejne me problem aayi hai.", 
+            systemErrorDetail: error.message 
+        });
     }
 });
 
@@ -173,8 +196,13 @@ app.post('/api/reset-password', async (req, res) => {
             res.status(400).json({ success: false, message: "Invalid OTP. Kripya sahi OTP daalein." });
         }
     } catch (error) {
-        console.error("❌ RESET PASSWORD ERROR:", error); // Error log for Render
-        res.status(500).json({ success: false, message: "Server error while resetting password." });
+        console.error("❌ RESET PASSWORD API CRASHED!");
+        console.error("👉 Reason:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error while resetting password.",
+            systemErrorDetail: error.message
+        });
     }
 });
 
@@ -197,8 +225,13 @@ app.post('/api/login', async (req, res) => {
 
         res.json({ success: true, token, role: user.role, username: user.username });
     } catch (error) {
-        console.error("❌ LOGIN ERROR:", error); // Error log for Render
-        res.status(500).json({ success: false, message: "Server error" });
+        console.error("❌ LOGIN API CRASHED!");
+        console.error("👉 Reason:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error during login.",
+            systemErrorDetail: error.message
+        });
     }
 });
 
@@ -217,8 +250,13 @@ app.post('/api/admin/assign-company', async (req, res) => {
 
         res.json({ success: true, message: `${worker.name} is successfully assigned to ${companyName}` });
     } catch (error) {
-        console.error("❌ ADMIN ASSIGN COMPANY ERROR:", error); // Error log for Render
-        res.status(500).json({ success: false, message: "Server error" });
+        console.error("❌ ADMIN ASSIGN COMPANY API CRASHED!");
+        console.error("👉 Reason:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error",
+            systemErrorDetail: error.message
+        });
     }
 });
 
